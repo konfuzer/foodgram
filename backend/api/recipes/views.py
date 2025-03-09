@@ -5,7 +5,7 @@ from recipes.models import TagsModel
 from recipes.models import IngredientsModel
 
 
-class TagViewSet(viewsets.ReadOnlyModelViewSet):
+class TagsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = TagsModel.objects.all()
     serializer_class = TagSerializer
 
