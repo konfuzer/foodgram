@@ -41,7 +41,6 @@ class IngredientsModel(models.Model):
         return f"{self.title} {self.unit_of_measurement}"
 
 
-
 class RecipesModel(models.Model):
     user_publishing = models.ForeignKey(
         UserModel,
@@ -103,8 +102,8 @@ class RecipeIngredientModel(models.Model):
     )
 
     class Meta:
-        verbose_name = 'Количество инредиента в рецепте'
-        verbose_name_plural = 'Количество ингредиента в рецепте'
+        verbose_name = 'Количество ингредиента в рецепте'
+        verbose_name_plural = 'Количества ингредиента в рецепте'
 
     def __str__(self):
-        return f'{self.recipe} {self.amount} {self.ingredient.name}'
+        return f'{self.recipe.name} {self.amount} {self.ingredient.name}'
