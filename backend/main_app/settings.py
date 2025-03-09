@@ -12,9 +12,7 @@ SECRET_KEY = env('SECRET_KEY', 'django-insecure-key')
 
 DEBUG = env.bool('DEBUG', True)
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', '127.0.0.1,localhost')
-
-
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', ['127.0.0.1','localhost'])
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -23,6 +21,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'rest_framework',
+    'djoser',
+
 
     'recipes.apps.RecipesConfig',
     'accounts.apps.AccountsConfig',
@@ -102,3 +104,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'accounts.UserModel'
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+}

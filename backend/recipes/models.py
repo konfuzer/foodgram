@@ -62,7 +62,7 @@ class RecipesModel(models.Model):
 
     ingredients = models.ManyToManyField(
         IngredientsModel,
-        through='RecipeIngredient',
+        through='RecipeIngredientModel',
         verbose_name='Ингредиенты (продукты количество и ед. измерения)',
         related_name='in_recipes'
     )
@@ -106,4 +106,4 @@ class RecipeIngredientModel(models.Model):
         verbose_name_plural = 'Количества ингредиента в рецепте'
 
     def __str__(self):
-        return f'{self.recipe.name} {self.amount} {self.ingredient.name}'
+        return f'{self.recipe.title} {self.amount} {self.ingredient.title}'
