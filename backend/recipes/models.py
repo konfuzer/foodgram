@@ -5,7 +5,7 @@ UserModel = get_user_model()
 
 
 class TagsModel(models.Model):
-    title = models.CharField(
+    name = models.CharField(
         max_length=255,
         unique=True,
         verbose_name='Название'
@@ -20,15 +20,15 @@ class TagsModel(models.Model):
         verbose_name_plural = 'Теги'
 
     def __str__(self):
-        return f"{self.title} {self.slug}"
+        return f"{self.name} {self.slug}"
 
 
 class IngredientsModel(models.Model):
-    title = models.CharField(
+    name = models.CharField(
         max_length=255,
         verbose_name='Название'
     )
-    unit_of_measurement = models.CharField(
+    measurement_unit = models.CharField(
         max_length=30,
         verbose_name='Единица измерения'
     )
@@ -38,25 +38,25 @@ class IngredientsModel(models.Model):
         verbose_name_plural = 'Ингредиенты'
 
     def __str__(self):
-        return f"{self.title} {self.unit_of_measurement}"
+        return f"{self.name} {self.measurement_unit}"
 
 
 class RecipesModel(models.Model):
-    user_publishing = models.ForeignKey(
+    author = models.ForeignKey(
         UserModel,
         on_delete=models.CASCADE,
         verbose_name='Автор публикации (пользователь)',
         related_name='recipes'
     )
-    title = models.CharField(
-        max_length=255,
+    name = models.CharField(
+        max_length=256,
         verbose_name='Название'
     )
-    picture = models.ImageField(
+    image = models.ImageField(
         upload_to='recipes/',
         verbose_name='Картинка'
     )
-    text_description = models.TextField(
+    text = models.TextField(
         verbose_name='Текстовое описание'
     )
 
@@ -81,7 +81,7 @@ class RecipesModel(models.Model):
         verbose_name_plural = 'Рецепты'
 
     def __str__(self):
-        return f"{self.title} {self.cooking_time} {self.user_publishing}"
+        return f"{self.name} {self.cooking_time} {self.author}"
 
 
 class RecipeIngredientModel(models.Model):
@@ -106,4 +106,53 @@ class RecipeIngredientModel(models.Model):
         verbose_name_plural = 'Количества ингредиента в рецепте'
 
     def __str__(self):
-        return f'{self.recipe.title} {self.amount} {self.ingredient.title}'
+        return f'{self.recipe.name} {self.amount} {self.ingredient.name}'
+
+
+class UserRecipeRelation(models.Model):
+    recipe = models.ForeignKey(
+        RecipesModel,
+        on_delete=models.CASCADE,
+        verbose_name='Рецепт'
+    )
+    user = models.ForeignKey(
+        UserModel,
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь'
+    )
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return f'{self.recipe} - {self.user}'
+
+
+class FavoritesModel(UserRecipeRelation):
+    class Meta(UserRecipeRelation.Meta):
+        verbose_name = 'Избранное у пользователя'
+        verbose_name_plural = 'Избранные у пользователей'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_favorite_recipe'
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.recipe.name} в избранном у {self.user.username}'
+
+
+class ShoppingCartModel(UserRecipeRelation):
+    class Meta(UserRecipeRelation.Meta):
+        verbose_name = 'Корзина покупок у пользователя'
+        verbose_name_plural = 'Корзины покупок у пользователей'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_shopping_cart'
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.recipe.name} в корзине у {self.user.username}'
