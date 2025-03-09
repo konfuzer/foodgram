@@ -7,7 +7,7 @@ from api.recipes.views import TagViewSet
 
 router = DefaultRouter()
 router.register('users', CustomUserViewSet, basename='users')
-router.register(r'tags', TagViewSet, basename='tag')
+router.register(r'tags', TagViewSet, basename='tags')
 
 urlpatterns = [
     path('', include(router.urls)),
