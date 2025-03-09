@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from api.accounts.serializers import GetUserInfoSerializer, CreateUserSerializer,UpdateUserAvatarSerializer
-
 from api.pagination import PageLimitPagination
 
 

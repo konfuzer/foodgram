@@ -3,9 +3,11 @@ from rest_framework.routers import DefaultRouter
 
 from api.accounts.views import CustomUserViewSet
 
+from api.recipes.views import TagViewSet
+
 router = DefaultRouter()
 router.register('users', CustomUserViewSet, basename='users')
-
+router.register(r'tags', TagViewSet, basename='tag')
 
 urlpatterns = [
     path('', include(router.urls)),
