@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -11,3 +12,16 @@ class UserModel(AbstractUser):
 
     def __str__(self):
         return self.username + ' ' + self.email
+
+class SubscriptionsModel(models.Model):
+    user = models.ForeignKey(
+        get_user_model(), on_delete=models.CASCADE, related_name="subscriptions"
+    )
+    subscribed_to = models.ForeignKey(
+        get_user_model(), on_delete=models.CASCADE, related_name="subscribers"
+    )
+    class Meta:
+        unique_together = ("user", "subscribed_to")
+
+    def __str__(self):
+        return f"{self.user} подписан на {self.subscribed_to}"

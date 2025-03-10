@@ -9,7 +9,7 @@ from recipes.models import IngredientsModel,RecipesModel
 
 from api.pagination import PageLimitPagination
 
-from ..permissions import IsAuthorOrAdmin
+from api.permissions import IsAuthorOrAdmin
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):

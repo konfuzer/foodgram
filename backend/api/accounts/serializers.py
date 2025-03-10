@@ -5,6 +5,8 @@ from rest_framework import serializers
 
 from api.serializers import Base64ImageField
 
+from accounts.models import SubscriptionsModel
+
 UserModel = get_user_model()
 
 
@@ -39,7 +41,6 @@ class GetUserInfoSerializer(UserSerializer):
         return False
 
 
-
 class UpdateUserAvatarSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(required=True)
 
@@ -51,3 +52,41 @@ class UpdateUserAvatarSerializer(serializers.ModelSerializer):
         data = super().to_representation(obj)
         data['avatar'] = obj.avatar.url if obj.avatar else None
         return data
+
+
+class CreateSubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionsModel
+        fields = ('user', 'subscribed_to')
+
+    def validate(self, data):
+        user = self.context['request'].user
+        target_user = data.get('subscribed_to')
+        if user == target_user:
+            raise serializers.ValidationError({"error": "Нельзя подписаться на себя"})
+        return data
+
+    def to_representation(self, obj):
+        request = self.context.get('request')
+        return GetSubscriptionUserInfoSerializer(
+            obj.subscribed_to,
+            context={'request': request}
+        ).data
+
+
+class GetSubscriptionUserInfoSerializer(GetUserInfoSerializer):
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta(GetUserInfoSerializer.Meta):
+        model = UserModel
+        fields = GetUserInfoSerializer.Meta.fields + ('email',
+                                                      'recipes',
+                                                      'recipes_count',
+                                                      )
+
+    def get_recipes(self, obj):
+        pass
+
+    def get_recipes_count(self, obj):
+        pass
