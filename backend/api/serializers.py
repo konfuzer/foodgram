@@ -9,4 +9,3 @@ class Base64ImageField(serializers.ImageField):
             ext = format_str.split('/')[-1]
             data = ContentFile(base64.b64decode(img_str), name='temp.' + ext)
         return super().to_internal_value(data)
-
