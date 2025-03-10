@@ -7,10 +7,11 @@ from rest_framework.response import Response
 from rest_framework import status
 
 from api.accounts.serializers import GetUserInfoSerializer, CreateUserSerializer, UpdateUserAvatarSerializer, \
-    CreateSubscriptionSerializer
+    CreateSubscriptionSerializer,GetSubscriptionUserInfoSerializer
 from api.pagination import PageLimitPagination
 
 from accounts.models import SubscriptionsModel
+
 
 UserModel = get_user_model()
 
@@ -68,3 +69,13 @@ class CustomUserViewSet(UserViewSet):
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response({"error": "Вы не подписаны"}, status=status.HTTP_400_BAD_REQUEST)
+    @action(
+        methods=['get'],
+        detail=False,
+        permission_classes=[IsAuthenticated,])
+    def subscriptions(self, request):
+        subscriptions = UserModel.objects.filter(subscribers__user=request.user)
+        result_pages = self.paginate_queryset(queryset=subscriptions)
+        serializer = GetSubscriptionUserInfoSerializer(
+            result_pages, context={'request': request}, many=True)
+        return self.get_paginated_response(serializer.data)

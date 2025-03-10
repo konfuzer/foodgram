@@ -7,6 +7,7 @@ from api.serializers import Base64ImageField
 
 from accounts.models import SubscriptionsModel
 
+
 UserModel = get_user_model()
 
 
@@ -80,13 +81,29 @@ class GetSubscriptionUserInfoSerializer(GetUserInfoSerializer):
 
     class Meta(GetUserInfoSerializer.Meta):
         model = UserModel
-        fields = GetUserInfoSerializer.Meta.fields + ('email',
+        fields = GetUserInfoSerializer.Meta.fields + (
                                                       'recipes',
                                                       'recipes_count',
                                                       )
 
     def get_recipes(self, obj):
-        pass
+        from api.recipes.serializers import GetMiniRecipesSerializer
+
+        request = self.context.get('request')
+        recipes_limit = request.query_params.get('recipes_limit')
+
+        if recipes_limit is not None:
+            try:
+                recipes_limit = int(recipes_limit)
+            except ValueError:
+                recipes_limit = None
+
+        recipes = obj.recipes.all()
+        if recipes_limit:
+            recipes = recipes[:recipes_limit]
+
+        return GetMiniRecipesSerializer(recipes, many=True, context=self.context).data
 
     def get_recipes_count(self, obj):
-        pass
+        return obj.recipes.count()
+

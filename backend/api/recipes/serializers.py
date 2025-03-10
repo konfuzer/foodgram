@@ -29,10 +29,18 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
 
 
-class GetRecipesSerializer(serializers.ModelSerializer):
+class GetMiniRecipesSerializer(serializers.ModelSerializer):
+    image = Base64ImageField(read_only=True)
+    class Meta:
+        model = RecipesModel
+        fields = ['id',
+                  'name',
+                  'image',
+                  'cooking_time',
+                  ]
+class GetRecipesSerializer(GetMiniRecipesSerializer):
     tags = TagSerializer(many=True, read_only=True)
     author = GetUserInfoSerializer(read_only=True)
-    image = Base64ImageField(read_only=True)
 
     ingredients = RecipeIngredientSerializer(
         many=True,
@@ -44,18 +52,15 @@ class GetRecipesSerializer(serializers.ModelSerializer):
     is_in_shopping_cart = serializers.SerializerMethodField()
 
 
-    class Meta:
+    class Meta(GetMiniRecipesSerializer.Meta):
         model = RecipesModel
-        fields = ['id',
+        fields = GetMiniRecipesSerializer.Meta.fields + [
                   'tags',
                   'author',
                   'ingredients',
                   'is_favorited',
                   'is_in_shopping_cart',
-                  'name',
-                  'image',
                   'text',
-                  'cooking_time',
                   ]
     def get_is_favorited(self, obj):
         return False
