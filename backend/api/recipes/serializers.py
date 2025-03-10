@@ -66,12 +66,13 @@ class GetRecipesSerializer(serializers.ModelSerializer):
     def get_is_in_shopping_cart(self, obj):
         return False
 class CreateRecipesSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True, read_only=True)
+    tags = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=TagsModel.objects.all()
+    )
     image = Base64ImageField(required=True)
     ingredients = RecipeIngredientSerializer(
         many=True,
-        source='ingredient_amount',
-        read_only=True
     )
     class Meta:
         model = RecipesModel
@@ -89,7 +90,34 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
             obj,
             context={'request': request}
         ).data
+
+    def actual_common_data(self, recipe, ingredients_data, tags_data, create=False):
+        if not create:
+            recipe.ingredient_amount.all().delete()
+            recipe.tags.clear()
+
+        recipe_ingredients = [
+            RecipeIngredientModel(
+                recipe=recipe,
+                ingredient=data['ingredient'],
+                amount=data['amount']
+            ) for data in ingredients_data
+        ]
+
+        RecipeIngredientModel.objects.bulk_create(recipe_ingredients)
+        recipe.tags.set(tags_data)
+
     def create(self, validated_data):
         request = self.context.get('request')
+        ingredients_data = validated_data.pop('ingredients', [])
+        tags_data = validated_data.pop('tags', [])
         recipe = RecipesModel.objects.create(author=request.user, **validated_data)
+        self.actual_common_data(recipe, ingredients_data, tags_data, create=True)
         return recipe
+
+    def update(self, obj, validated_data):
+        ingredients_data = validated_data.pop('ingredients', [])
+        tags_data = validated_data.pop('tags', [])
+        super().update(obj, validated_data)
+        self.actual_common_data(obj, ingredients_data, tags_data)
+        return obj
