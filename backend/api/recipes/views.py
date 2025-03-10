@@ -1,6 +1,8 @@
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
+from .filters import IngredientsFilter, RecipesFilter
 from .serializers import TagSerializer, IngredientsSerializer, GetRecipesSerializer,CreateRecipesSerializer
 from recipes.models import TagsModel
 from recipes.models import IngredientsModel,RecipesModel
@@ -18,12 +20,15 @@ class TagsViewSet(viewsets.ReadOnlyModelViewSet):
 class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = IngredientsModel.objects.all()
     serializer_class = IngredientsSerializer
-
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = IngredientsFilter
 
 class RecipesViewSet(viewsets.ModelViewSet):
     queryset = RecipesModel.objects.all()
     serializer_class = GetRecipesSerializer
     pagination_class = PageLimitPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = RecipesFilter
 
     def get_serializer_class(self):
         if self.action == 'create' or 'update':
