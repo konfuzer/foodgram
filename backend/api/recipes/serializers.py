@@ -1,13 +1,7 @@
+from django.core.validators import MinValueValidator
 from rest_framework import serializers
-
-from recipes.models import TagsModel
-
-from recipes.models import IngredientsModel
-
-from recipes.models import RecipesModel
-
+from recipes.models import TagsModel,RecipesModel,IngredientsModel,RecipeIngredientModel
 from api.accounts.serializers import GetUserInfoSerializer
-from recipes.models import RecipeIngredientModel
 from api.serializers import Base64ImageField
 
 class TagSerializer(serializers.ModelSerializer):
@@ -27,11 +21,13 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     )
     name = serializers.CharField(source='ingredient.name', read_only=True)
     measurement_unit = serializers.CharField(source='ingredient.measurement_unit', read_only=True)
-    amount = serializers.IntegerField()
+    amount = serializers.IntegerField(validators=[MinValueValidator(1)])
 
     class Meta:
         model = RecipeIngredientModel
         fields = ['id', 'name', 'measurement_unit', 'amount']
+
+
 
 class GetRecipesSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
@@ -95,7 +91,7 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         if not create:
             recipe.ingredient_amount.all().delete()
             recipe.tags.clear()
-
+            print(recipe.ingredient_amount.all())
         recipe_ingredients = [
             RecipeIngredientModel(
                 recipe=recipe,
@@ -121,3 +117,21 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         super().update(obj, validated_data)
         self.actual_common_data(obj, ingredients_data, tags_data)
         return obj
+
+
+    def validate(self, data):
+
+        tags = data.get('tags', [])
+        if not tags:
+            raise serializers.ValidationError({"tags": "Теги обязательны"})
+        if len(tags) != len(set(tags)):
+            raise serializers.ValidationError({"tags": "Теги не должны повторяться"})
+
+
+        ingredients = data.get('ingredients', [])
+        if not ingredients:
+            raise serializers.ValidationError({"ingredients": "Ингредиенты обязательны"})
+        ingredient_ids = [ingredient.get('ingredient').id for ingredient in ingredients]
+        if len(ingredient_ids) != len(set(ingredient_ids)):
+            raise serializers.ValidationError({"ingredients": "Ингредиенты не должны повторяться"})
+        return data
