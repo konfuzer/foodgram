@@ -50,6 +50,21 @@ class RecipesViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = RecipesFilter
 
+    def retrieve(self, request, pk=None):
+        try:
+            pk = int(pk)
+        except ValueError:
+            decoded_bytes = base64.urlsafe_b64decode(pk)
+            pk = int(decoded_bytes.decode())
+        except (ValueError, TypeError, base64.binascii.Error):
+            return Response(
+                {"detail": "Значение не подходит"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        recipe = get_object_or_404(RecipesModel, pk=pk)
+        serializer = self.get_serializer(recipe)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def get_serializer_class(self):
         if self.action == "create" or "update":
             return CreateRecipesSerializer
@@ -162,19 +177,3 @@ class RecipesViewSet(viewsets.ModelViewSet):
             {"short-link": f"{host}/s/{encoded_id}/"},
             status=status.HTTP_200_OK,
         )
-
-    @action(
-        methods=["get"], detail=False, url_path=r"s/(?P<encoded_id>[^/.]+)"
-    )
-    def decode_link(self, request, encoded_id=None):
-        try:
-            decoded_bytes = base64.urlsafe_b64decode(encoded_id)
-            decoded_id = int(decoded_bytes.decode())
-        except (ValueError, TypeError, base64.binascii.Error):
-            return Response(
-                {"detail": "Значение не подходит"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        recipe = get_object_or_404(RecipesModel, id=decoded_id)
-        serializer = self.get_serializer(recipe)
-        return Response(serializer.data, status=status.HTTP_200_OK)
