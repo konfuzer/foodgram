@@ -6,28 +6,32 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0001_initial'),
+        ("accounts", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='usermodel',
-            name='avatar',
-            field=models.ImageField(blank=True, null=True, upload_to='avatars/'),
+            model_name="usermodel",
+            name="avatar",
+            field=models.ImageField(
+                blank=True, null=True, upload_to="avatars/"
+            ),
         ),
         migrations.AlterField(
-            model_name='usermodel',
-            name='email',
-            field=models.EmailField(max_length=254, verbose_name='Адрес электронной почты'),
+            model_name="usermodel",
+            name="email",
+            field=models.EmailField(
+                max_length=254, verbose_name="Адрес электронной почты"
+            ),
         ),
         migrations.AlterField(
-            model_name='usermodel',
-            name='first_name',
-            field=models.CharField(max_length=150, verbose_name='Имя'),
+            model_name="usermodel",
+            name="first_name",
+            field=models.CharField(max_length=150, verbose_name="Имя"),
         ),
         migrations.AlterField(
-            model_name='usermodel',
-            name='last_name',
-            field=models.CharField(max_length=150, verbose_name='Фамилия'),
+            model_name="usermodel",
+            name="last_name",
+            field=models.CharField(max_length=150, verbose_name="Фамилия"),
         ),
     ]

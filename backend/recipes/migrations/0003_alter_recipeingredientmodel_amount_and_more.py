@@ -7,18 +7,27 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('recipes', '0002_rename_unit_of_measurement_ingredientsmodel_measurement_unit_and_more'),
+        (
+            "recipes",
+            "0002_rename_unit_of_measurement_ingredientsmodel_measurement_unit_and_more",
+        ),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='recipeingredientmodel',
-            name='amount',
-            field=models.PositiveIntegerField(validators=[django.core.validators.MinValueValidator(1)], verbose_name='Количество'),
+            model_name="recipeingredientmodel",
+            name="amount",
+            field=models.PositiveIntegerField(
+                validators=[django.core.validators.MinValueValidator(1)],
+                verbose_name="Количество",
+            ),
         ),
         migrations.AlterField(
-            model_name='recipesmodel',
-            name='cooking_time',
-            field=models.PositiveIntegerField(validators=[django.core.validators.MinValueValidator(1)], verbose_name='Время приготовления в минутах'),
+            model_name="recipesmodel",
+            name="cooking_time",
+            field=models.PositiveIntegerField(
+                validators=[django.core.validators.MinValueValidator(1)],
+                verbose_name="Время приготовления в минутах",
+            ),
         ),
     ]

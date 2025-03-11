@@ -1,17 +1,20 @@
 from django.contrib.auth import get_user_model
 from djoser.views import UserViewSet
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
-
-from api.accounts.serializers import GetUserInfoSerializer, CreateUserSerializer, UpdateUserAvatarSerializer, \
-    CreateSubscriptionSerializer,GetSubscriptionUserInfoSerializer
-from api.pagination import PageLimitPagination
 
 from accounts.models import SubscriptionsModel
-
+from api.accounts.serializers import (
+    CreateSubscriptionSerializer,
+    CreateUserSerializer,
+    GetSubscriptionUserInfoSerializer,
+    GetUserInfoSerializer,
+    UpdateUserAvatarSerializer,
+)
+from api.pagination import PageLimitPagination
 
 UserModel = get_user_model()
 
@@ -26,56 +29,74 @@ class CustomUserViewSet(UserViewSet):
         return super().get_permissions()
 
     def get_serializer_class(self):
-        if self.action == 'create':
+        if self.action == "create":
             return CreateUserSerializer
-        if self.action == 'me':
+        if self.action == "me":
             return GetUserInfoSerializer
         return super().get_serializer_class()
 
-    @action(methods=['put', 'delete'], detail=False, url_path='me/avatar')
+    @action(methods=["put", "delete"], detail=False, url_path="me/avatar")
     def me_avatar(self, request):
         user = request.user
-        if request.method == 'PUT':
+        if request.method == "PUT":
             serializer = UpdateUserAvatarSerializer(user, data=request.data)
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
-        elif request.method == 'DELETE':
+        elif request.method == "DELETE":
             user.avatar.delete()
             user.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=['post', 'delete'], detail=True, permission_classes=[IsAuthenticated])
+    @action(
+        methods=["post", "delete"],
+        detail=True,
+        permission_classes=[IsAuthenticated],
+    )
     def subscribe(self, request, id=None):
         user = request.user
         subscribed_to = get_object_or_404(UserModel, id=id)
 
-        if request.method == 'POST':
-            serializer = CreateSubscriptionSerializer(data={
-                'user': user.id,
-                'subscribed_to': subscribed_to.id,
-            },
-                context={'request': request}
+        if request.method == "POST":
+            serializer = CreateSubscriptionSerializer(
+                data={
+                    "user": user.id,
+                    "subscribed_to": subscribed_to.id,
+                },
+                context={"request": request},
             )
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                return Response(
+                    serializer.data, status=status.HTTP_201_CREATED
+                )
 
-        elif request.method == 'DELETE':
-            subscription = SubscriptionsModel.objects.filter(user=user, subscribed_to=subscribed_to).first()
+        elif request.method == "DELETE":
+            subscription = SubscriptionsModel.objects.filter(
+                user=user, subscribed_to=subscribed_to
+            ).first()
             if subscription:
                 subscription.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
-        return Response({"error": "Вы не подписаны"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"error": "Вы не подписаны"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
     @action(
-        methods=['get'],
+        methods=["get"],
         detail=False,
-        permission_classes=[IsAuthenticated,])
+        permission_classes=[
+            IsAuthenticated,
+        ],
+    )
     def subscriptions(self, request):
-        subscriptions = UserModel.objects.filter(subscribers__user=request.user)
+        subscriptions = UserModel.objects.filter(
+            subscribers__user=request.user
+        )
         result_pages = self.paginate_queryset(queryset=subscriptions)
         serializer = GetSubscriptionUserInfoSerializer(
-            result_pages, context={'request': request}, many=True)
+            result_pages, context={"request": request}, many=True
+        )
         return self.get_paginated_response(serializer.data)

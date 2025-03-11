@@ -8,77 +8,132 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('recipes', '0001_initial'),
+        ("recipes", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='ingredientsmodel',
-            old_name='unit_of_measurement',
-            new_name='measurement_unit',
+            model_name="ingredientsmodel",
+            old_name="unit_of_measurement",
+            new_name="measurement_unit",
         ),
         migrations.RenameField(
-            model_name='ingredientsmodel',
-            old_name='title',
-            new_name='name',
+            model_name="ingredientsmodel",
+            old_name="title",
+            new_name="name",
         ),
         migrations.RenameField(
-            model_name='recipesmodel',
-            old_name='user_publishing',
-            new_name='author',
+            model_name="recipesmodel",
+            old_name="user_publishing",
+            new_name="author",
         ),
         migrations.RenameField(
-            model_name='recipesmodel',
-            old_name='picture',
-            new_name='image',
+            model_name="recipesmodel",
+            old_name="picture",
+            new_name="image",
         ),
         migrations.RenameField(
-            model_name='recipesmodel',
-            old_name='text_description',
-            new_name='text',
+            model_name="recipesmodel",
+            old_name="text_description",
+            new_name="text",
         ),
         migrations.RenameField(
-            model_name='tagsmodel',
-            old_name='title',
-            new_name='name',
+            model_name="tagsmodel",
+            old_name="title",
+            new_name="name",
         ),
         migrations.RemoveField(
-            model_name='recipesmodel',
-            name='title',
+            model_name="recipesmodel",
+            name="title",
         ),
         migrations.AddField(
-            model_name='recipesmodel',
-            name='name',
-            field=models.CharField(default=1, max_length=256, verbose_name='Название'),
+            model_name="recipesmodel",
+            name="name",
+            field=models.CharField(
+                default=1, max_length=256, verbose_name="Название"
+            ),
             preserve_default=False,
         ),
         migrations.CreateModel(
-            name='FavoritesModel',
+            name="FavoritesModel",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('recipe', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='recipes.recipesmodel', verbose_name='Рецепт')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='Пользователь')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "recipe",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="recipes.recipesmodel",
+                        verbose_name="Рецепт",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Пользователь",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Избранное у пользователя',
-                'verbose_name_plural': 'Избранные у пользователей',
-                'abstract': False,
-                'constraints': [models.UniqueConstraint(fields=('user', 'recipe'), name='unique_favorite_recipe')],
+                "verbose_name": "Избранное у пользователя",
+                "verbose_name_plural": "Избранные у пользователей",
+                "abstract": False,
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("user", "recipe"),
+                        name="unique_favorite_recipe",
+                    )
+                ],
             },
         ),
         migrations.CreateModel(
-            name='ShoppingCartModel',
+            name="ShoppingCartModel",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('recipe', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='recipes.recipesmodel', verbose_name='Рецепт')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL, verbose_name='Пользователь')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "recipe",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="recipes.recipesmodel",
+                        verbose_name="Рецепт",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Пользователь",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Корзина покупок у пользователя',
-                'verbose_name_plural': 'Корзины покупок у пользователей',
-                'abstract': False,
-                'constraints': [models.UniqueConstraint(fields=('user', 'recipe'), name='unique_shopping_cart')],
+                "verbose_name": "Корзина покупок у пользователя",
+                "verbose_name_plural": "Корзины покупок у пользователей",
+                "abstract": False,
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("user", "recipe"), name="unique_shopping_cart"
+                    )
+                ],
             },
         ),
     ]
