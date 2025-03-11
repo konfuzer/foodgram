@@ -1,3 +1,7 @@
+import base64
+
+from django.db.models import Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status
@@ -8,7 +12,7 @@ from rest_framework.response import Response
 from .filters import IngredientsFilter, RecipesFilter
 from .serializers import TagSerializer, IngredientsSerializer, GetRecipesSerializer, CreateRecipesSerializer, \
     ShoppingCartSerializer, FavoriteSerializer
-from recipes.models import IngredientsModel, RecipesModel,TagsModel, ShoppingCartModel, FavoritesModel
+from recipes.models import IngredientsModel, RecipesModel,TagsModel, ShoppingCartModel, FavoritesModel,RecipeIngredientModel
 
 from api.pagination import PageLimitPagination
 
@@ -33,6 +37,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
     pagination_class = PageLimitPagination
     filter_backends = [DjangoFilterBackend]
     filterset_class = RecipesFilter
+
+
+
 
     def get_serializer_class(self):
         if self.action == 'create' or 'update':
@@ -84,3 +91,39 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response({"error": "Рецепт не найден в избранном"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['get'],detail=False,  permission_classes=[IsAuthenticated])
+    def download_shopping_cart(self, request):
+        ingredients = RecipeIngredientModel.objects.filter(
+            recipe__shoppingcartmodel__user=request.user
+        ).values(
+            'ingredient__name', 'ingredient__measurement_unit'
+        ).annotate(total_amount=Sum('amount')).order_by('ingredient__name')
+        file_content = ""
+        for item in ingredients:
+            file_content += f"{item['ingredient__name']} {item['total_amount']} {item['ingredient__measurement_unit']}\n"
+        response = HttpResponse(file_content, content_type='text/plain')
+        response['Content-Disposition'] = 'attachment; filename="shopping_cart.txt"'
+        return response
+    @action(
+        methods=['get'],
+        detail=True,
+        url_path = 'get-link'
+    )
+    def get_link(self, request, pk=None):
+        recipe = self.get_object()
+        encoded_id = base64.urlsafe_b64encode(str(recipe.id).encode()).decode()
+        host=request.META['HTTP_HOST']
+        return Response({'short-link': f"{host}/s/{encoded_id}/"}, status=status.HTTP_200_OK)
+
+    @action(methods=['get'], detail=False, url_path=r's/(?P<encoded_id>[^/.]+)')
+    def decode_link(self, request, encoded_id=None):
+        try:
+            decoded_bytes = base64.urlsafe_b64decode(encoded_id)
+            decoded_id = int(decoded_bytes.decode())
+        except (ValueError, TypeError, base64.binascii.Error):
+            return Response({'detail': 'Значение не подходит'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        recipe = get_object_or_404(RecipesModel, id=decoded_id)
+        serializer = self.get_serializer(recipe)
+        return Response(serializer.data, status=status.HTTP_200_OK)
