@@ -1,4 +1,17 @@
-Находясь в папке infra, выполните команду docker-compose up. При выполнении этой команды контейнер frontend, описанный в docker-compose.yml, подготовит файлы, необходимые для работы фронтенд-приложения, а затем прекратит свою работу.
+# Проект ФУДГРАМ
 
-По адресу http://localhost изучите фронтенд веб-приложения, а по адресу http://localhost/api/docs/ — спецификацию API.
+### Бэкенд на питоне 3.11 c использованием библиотеки DRF, фронтенд React, запуск через Docker.
 
+
+
+
+
+https://foodgramprod.hopto.org 
+Тестовая версия
+<br>
+Логин `admin@admin.com`
+Пароль `admin`
+
+
+#### Автор https://github.com/konfuzer/ 
+#### Ivan Artemov
