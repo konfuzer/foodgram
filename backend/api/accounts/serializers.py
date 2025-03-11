@@ -106,4 +106,3 @@ class GetSubscriptionUserInfoSerializer(GetUserInfoSerializer):
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
-

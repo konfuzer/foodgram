@@ -1,8 +1,10 @@
 from django.core.validators import MinValueValidator
 from rest_framework import serializers
-from recipes.models import TagsModel,RecipesModel,IngredientsModel,RecipeIngredientModel
+from recipes.models import TagsModel,RecipesModel,IngredientsModel,RecipeIngredientModel, ShoppingCartModel, FavoritesModel
 from api.accounts.serializers import GetUserInfoSerializer
 from api.serializers import Base64ImageField
+
+
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -140,3 +142,42 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise serializers.ValidationError({"ingredients": "Ингредиенты не должны повторяться"})
         return data
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShoppingCartModel
+        fields = ['user', 'recipe']
+
+    def validate(self, data):
+        user = data['user']
+        recipe = data['recipe']
+        if ShoppingCartModel.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError("Этот рецепт уже в корзине покупок")
+        return data
+
+    def to_representation(self, obj):
+        request = self.context.get('request')
+        return GetMiniRecipesSerializer(
+            obj.recipe,
+            context={'request': request}
+        ).data
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FavoritesModel
+        fields = ['user', 'recipe']
+
+    def validate(self, data):
+        user = data['user']
+        recipe = data['recipe']
+        if FavoritesModel.objects.filter(user=user, recipe=recipe).exists():
+            raise serializers.ValidationError("Этот рецепт уже в избранном")
+        return data
+    def to_representation(self, obj):
+        request = self.context.get('request')
+        return GetMiniRecipesSerializer(
+            obj.recipe,
+            context={'request': request}
+        ).data
+
