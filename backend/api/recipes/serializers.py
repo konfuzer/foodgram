@@ -65,9 +65,17 @@ class GetRecipesSerializer(GetMiniRecipesSerializer):
                   'text',
                   ]
     def get_is_favorited(self, obj):
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            return obj.favoritesmodel_set.filter(user=user).exists()
         return False
+
     def get_is_in_shopping_cart(self, obj):
+        user = self.context.get('request').user
+        if user.is_authenticated:
+            return obj.shoppingcartmodel_set.filter(user=user).exists()
         return False
+
 class CreateRecipesSerializer(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
