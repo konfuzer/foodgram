@@ -15,6 +15,8 @@ https://foodgramprod.hopto.org
 
 `cd infra`
 
+`сделать копию .env файла в infra .example.env -> .env и добавить в ALLOWED_HOSTS свой домен или ip `
+
 `docker compose up`
 
 `docker compose exec backend python manage.py migrate`
@@ -26,6 +28,8 @@ https://foodgramprod.hopto.org
 `docker compose exec backend python manage.py add_ingr "../data/ingredients.json"`
 
 Будет доступен на localhost:8000
+
+
 
 
 #### Автор https://github.com/konfuzer/ 
