@@ -12,6 +12,15 @@ SECRET_KEY = env("SECRET_KEY", "django-insecure-key")
 DEBUG = env.bool("DEBUG", True)
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", ["127.0.0.1", "localhost"])
+CSRF_TRUSTED_ORIGINS = [
+    f"http://{host}"
+    for host in ALLOWED_HOSTS
+    if host not in ["localhost", "127.0.0.1"]
+] + [
+    f"https://{host}"
+    for host in ALLOWED_HOSTS
+    if host not in ["localhost", "127.0.0.1"]
+]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
