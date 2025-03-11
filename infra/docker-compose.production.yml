@@ -12,7 +12,7 @@ services:
     volumes:
       - pg_data_production:/var/lib/postgresql/data
   backend:
-    build: ../backend/
+    image: konfuzer/foodgram-backend
     env_file: .env
     depends_on:
       - db
@@ -21,7 +21,7 @@ services:
       - media_volume:/app/media/
       - ../data:/data/
   frontend:
-    container_name: foodgram-front
+    image: konfuzer/foodgram-frontend
     build: ../frontend
     volumes:
       - ../frontend/:/app/result_build/
