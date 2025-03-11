@@ -29,7 +29,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip 
           pip install -r ./backend/requirements.txt
-
       - name: Run check flake8
         env:
           POSTGRES_USER: foodgram_user
@@ -96,7 +95,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          source: "docker-compose.production.yml"
+          source: "infra/docker-compose.production.yml"
           target: "foodgram/infra"
       - name: Execute remote SSH commands to deploy
         uses: appleboy/ssh-action@master
