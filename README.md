@@ -18,8 +18,9 @@
 
 
 Workflow:
-![Deploy bage](https://github.com/konfuzer/foodgram/actions/main.yml/WORKFLOW-FILE/badge.svg)
+![Build Status](https://github.com/konfuzer/foodgram/actions/workflows/main.yml/badge.svg)
 
+# My Project 🚀
 
 
 ## 🛠 Технологии
