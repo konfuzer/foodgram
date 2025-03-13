@@ -1,5 +1,3 @@
-
-
 #  Проект ФУДГРАМ 
 ![Cooking](https://img.shields.io/badge/Cooking-FOODGRAM%20App-orange?style=for-the-badge&logo=chef&logoColor=white)
 
@@ -20,10 +18,10 @@
 Workflow:
 ![Build Status](https://github.com/konfuzer/foodgram/actions/workflows/main.yml/badge.svg)
 
-# My Project 🚀
+# My Project
 
 
-## 🛠 Технологии
+## Технологии
 - **Backend:** Python/Django, DRF, Gunicorn, Djoser
 - **Frontend:** Javascript/React
 - **Database:** PostgreSQL
@@ -32,12 +30,12 @@ Workflow:
 - **Linters Python:** Isort with plugins, Flake8, Black
 
 
-## 📌 О проекте
+## О проекте
 
 ###  Проект позволяет пользователям делиться рецептами и следить за рецептами других.
 
 
-## 🔍 Тестовый сайт
+## Тестовый сайт
 
 https://foodgramprod.hopto.org 
 <br>
@@ -46,13 +44,13 @@ https://foodgramprod.hopto.org
 
 
 
-## 🔧 Как развернуть локально?
+## Как развернуть локально?
 
 Склонировать репозиторий 
 
 `git clone https://github.com/konfuzer/foodgram.git`
 
-Перейти в папку 📁
+Перейти в папку
  
 `cd foodgram/infra`
 
@@ -60,9 +58,9 @@ https://foodgramprod.hopto.org
 
 добавить в ALLOWED_HOSTS и CSRF_TRUSTED_ORIGINS свой домен или ip (при необходимости)
 
-Убедиться что установлен докер https://docs.docker.com/compose/ 💻
+Убедиться что установлен докер https://docs.docker.com/compose/ 
 
-Запустить команды в консоли из папки `infra` 📁
+Запустить команды в консоли из папки `infra` 
 
 `docker compose up`
 
@@ -77,5 +75,5 @@ https://foodgramprod.hopto.org
 
 
 
-#### 🪪 Автор https://github.com/konfuzer/ 
-#### 🧑🏼‍💻 Ivan Artemov
+#### Автор https://github.com/konfuzer/ 
+#### Ivan Artemov

@@ -51,10 +51,10 @@ class CustomUserViewSet(MultiSerializerViewSetMixin, UserViewSet):
     )
     def subscribe(self, request, id=None):
         user = request.user
-        subscribed_to = get_object_or_404(
-            User.objects.annotate(recipes_count=Count("recipes")), id=id
-        )
         if request.method == "POST":
+            subscribed_to = get_object_or_404(
+                User.objects.annotate(recipes_count=Count("recipes")), id=id
+            )
 
             serializer = CreateSubscriptionSerializer(
                 data={
@@ -65,20 +65,19 @@ class CustomUserViewSet(MultiSerializerViewSetMixin, UserViewSet):
             )
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
-                return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
-                )
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == "DELETE":
             deleted_count, _ = Subscription.objects.filter(
-                user=user, subscribed_to=subscribed_to
+                user=user, subscribed_to_id=id
             ).delete()
 
             if deleted_count:
                 return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(
-            {"error": "Вы не подписаны"}, status=status.HTTP_400_BAD_REQUEST
-        )
+            else:
+                return Response(
+                    {"error": "Вы не подписаны"}, status=status.HTTP_400_BAD_REQUEST
+                )
 
     @action(
         methods=["get"],

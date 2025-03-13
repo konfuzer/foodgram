@@ -9,10 +9,11 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from api.funcs import convert_base64_int, create_output_shopping_cart
+
 from api.mixins import MultiSerializerViewSetMixin
 from api.pagination import PageLimitPagination
 from api.permissions import IsAuthorOrAdmin
+from api.utils import convert_base64_int, create_output_shopping_cart
 from recipes.models import (
     Favorite,
     Ingredient,
@@ -49,7 +50,6 @@ class RecipesViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
     queryset = Recipe.objects.select_related("author").prefetch_related(
         "tags",
         "ingredients",
-        "ingredient_amount__ingredient",
     )
     serializer_class = GetRecipesSerializer
     pagination_class = PageLimitPagination
