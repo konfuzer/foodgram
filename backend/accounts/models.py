@@ -1,19 +1,34 @@
-from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from accounts.validators import validate_username
 
-class UserModel(AbstractUser):
+
+class User(AbstractUser):
     email = models.EmailField(
-        "Адрес электронной почты", max_length=254, unique=True
+        verbose_name="Адрес электронной почты", max_length=254, unique=True
     )
-    avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
+    username = models.CharField(
+        max_length=150,
+        verbose_name="Уникальный юзернейм",
+        unique=True,
+        validators=[validate_username],
+    )
+    first_name = models.CharField(
+        max_length=150,
+        verbose_name="Имя",
+    )
+    last_name = models.CharField(
+        max_length=150,
+        verbose_name="Фамилия",
+    )
+    avatar = models.ImageField(upload_to="avatars/", blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
 
     def __str__(self):
-        return self.username + " " + self.email
+        return f"{self.username} {self.email}"
 
     class Meta:
         ordering = ["-id"]
@@ -21,14 +36,18 @@ class UserModel(AbstractUser):
         verbose_name_plural = "Пользователи"
 
 
-class SubscriptionsModel(models.Model):
+class Subscription(models.Model):
     user = models.ForeignKey(
-        get_user_model(),
+        User,
         on_delete=models.CASCADE,
         related_name="subscriptions",
+        verbose_name="Пользователь",
     )
     subscribed_to = models.ForeignKey(
-        get_user_model(), on_delete=models.CASCADE, related_name="subscribers"
+        User,
+        on_delete=models.CASCADE,
+        related_name="subscribers",
+        verbose_name="Подписчик пользователя",
     )
 
     class Meta:

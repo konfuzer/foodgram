@@ -9,15 +9,17 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from api.funcs import convert_base64_int, create_output_shopping_cart
+from api.mixins import MultiSerializerViewSetMixin
 from api.pagination import PageLimitPagination
 from api.permissions import IsAuthorOrAdmin
 from recipes.models import (
-    FavoritesModel,
-    IngredientsModel,
-    RecipeIngredientModel,
-    RecipesModel,
-    ShoppingCartModel,
-    TagsModel,
+    Favorite,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    ShoppingCart,
+    Tag,
 )
 
 from .filters import IngredientsFilter, RecipesFilter
@@ -32,43 +34,35 @@ from .serializers import (
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = TagsModel.objects.all()
+    queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
 
 class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = IngredientsModel.objects.all()
+    queryset = Ingredient.objects.all()
     serializer_class = IngredientsSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_class = IngredientsFilter
 
 
-class RecipesViewSet(viewsets.ModelViewSet):
-    queryset = RecipesModel.objects.all()
+class RecipesViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
+    queryset = Recipe.objects.select_related("author").prefetch_related(
+        "tags",
+        "ingredients",
+        "ingredient_amount__ingredient",
+    )
     serializer_class = GetRecipesSerializer
     pagination_class = PageLimitPagination
     filter_backends = [DjangoFilterBackend]
     filterset_class = RecipesFilter
+    serializer_classes = {
+        "create": CreateRecipesSerializer,
+        "partial_update": CreateRecipesSerializer,
+    }
 
-    def retrieve(self, request, pk=None):
-        try:
-            pk = int(pk)
-        except ValueError:
-            decoded_bytes = base64.urlsafe_b64decode(pk)
-            pk = int(decoded_bytes.decode())
-        except (ValueError, TypeError, base64.binascii.Error):
-            return Response(
-                {"detail": "Значение не подходит"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        recipe = get_object_or_404(RecipesModel, pk=pk)
-        serializer = self.get_serializer(recipe)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def get_serializer_class(self):
-        if self.action == "create" or "update":
-            return CreateRecipesSerializer
-        return super().get_serializer_class()
+    def get_object(self):
+        self.kwargs["pk"] = convert_base64_int(self.kwargs["pk"])
+        return super().get_object()
 
     def get_permissions(self):
         if self.action == "create":
@@ -77,17 +71,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return [IsAuthorOrAdmin()]
         return super().get_permissions()
 
-    @action(
-        methods=["post", "delete"],
-        detail=True,
-        permission_classes=[IsAuthenticated],
-    )
-    def shopping_cart(self, request, pk=None):
+    def handle_favorite_or_cart(
+        self, request, pk, model, serializer_class, error_message
+    ):
         user = request.user
-        recipe = get_object_or_404(RecipesModel, id=pk)
+        recipe = get_object_or_404(Recipe, id=pk)
 
         if request.method == "POST":
-            serializer = ShoppingCartSerializer(
+            serializer = serializer_class(
                 data={"user": user.id, "recipe": recipe.id},
                 context={"request": request},
             )
@@ -98,16 +89,28 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 )
 
         elif request.method == "DELETE":
-            shopping_cart_item = ShoppingCartModel.objects.filter(
+            deleted_count, _ = model.objects.filter(
                 user=user, recipe=recipe
-            ).first()
-            if shopping_cart_item:
-                shopping_cart_item.delete()
+            ).delete()
+            if deleted_count:
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response(
-            {"error": "Рецепт не найден в корзине"},
-            status=status.HTTP_400_BAD_REQUEST,
+            {"error": error_message}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    @action(
+        methods=["post", "delete"],
+        detail=True,
+        permission_classes=[IsAuthenticated],
+    )
+    def shopping_cart(self, request, pk=None):
+        return self.handle_favorite_or_cart(
+            request,
+            pk,
+            ShoppingCart,
+            ShoppingCartSerializer,
+            "Рецепт не найден в корзине",
         )
 
     @action(
@@ -116,31 +119,12 @@ class RecipesViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def favorite(self, request, pk=None):
-        user = request.user
-        recipe = get_object_or_404(RecipesModel, id=pk)
-
-        if request.method == "POST":
-            serializer = FavoriteSerializer(
-                data={"user": user.id, "recipe": recipe.id},
-                context={"request": request},
-            )
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
-                )
-
-        elif request.method == "DELETE":
-            favorite_item = FavoritesModel.objects.filter(
-                user=user, recipe=recipe
-            ).first()
-            if favorite_item:
-                favorite_item.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-
-        return Response(
-            {"error": "Рецепт не найден в избранном"},
-            status=status.HTTP_400_BAD_REQUEST,
+        return self.handle_favorite_or_cart(
+            request,
+            pk,
+            Favorite,
+            FavoriteSerializer,
+            "Рецепт не найден в избранном",
         )
 
     @action(
@@ -148,20 +132,14 @@ class RecipesViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         ingredients = (
-            RecipeIngredientModel.objects.filter(
-                recipe__shoppingcartmodel__user=request.user
+            RecipeIngredient.objects.filter(
+                recipe__shopping_carts__user=request.user
             )
             .values("ingredient__name", "ingredient__measurement_unit")
             .annotate(total_amount=Sum("amount"))
             .order_by("ingredient__name")
         )
-        file_content = ""
-        for item in ingredients:
-            file_content += (
-                f"{item['ingredient__name']} "
-                f"{item['total_amount']}"
-                f" {item['ingredient__measurement_unit']}\n"
-            )
+        file_content = create_output_shopping_cart(ingredients)
         response = HttpResponse(file_content, content_type="text/plain")
         response["Content-Disposition"] = (
             "attachment;" ' filename="shopping_cart.txt"'

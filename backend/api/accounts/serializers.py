@@ -1,16 +1,13 @@
-from django.contrib.auth import get_user_model
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 
-from accounts.models import SubscriptionsModel
+from accounts.models import Subscription, User
 from api.serializers import Base64ImageField
-
-UserModel = get_user_model()
 
 
 class CreateUserSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
-        model = UserModel
+        model = User
         fields = (
             "email",
             "username",
@@ -33,7 +30,7 @@ class GetUserInfoSerializer(UserSerializer):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta(UserSerializer.Meta):
-        model = UserModel
+        model = User
         fields = (
             "id",
             "email",
@@ -52,7 +49,7 @@ class UpdateUserAvatarSerializer(serializers.ModelSerializer):
     avatar = Base64ImageField(required=True)
 
     class Meta:
-        model = UserModel
+        model = User
         fields = ("avatar",)
 
     def to_representation(self, obj):
@@ -63,7 +60,7 @@ class UpdateUserAvatarSerializer(serializers.ModelSerializer):
 
 class CreateSubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = SubscriptionsModel
+        model = Subscription
         fields = ("user", "subscribed_to")
 
     def validate(self, data):
@@ -84,10 +81,10 @@ class CreateSubscriptionSerializer(serializers.ModelSerializer):
 
 class GetSubscriptionUserInfoSerializer(GetUserInfoSerializer):
     recipes = serializers.SerializerMethodField()
-    recipes_count = serializers.SerializerMethodField()
+    recipes_count = serializers.IntegerField(read_only=True, default=0)
 
     class Meta(GetUserInfoSerializer.Meta):
-        model = UserModel
+        model = User
         fields = GetUserInfoSerializer.Meta.fields + (
             "recipes",
             "recipes_count",
@@ -99,19 +96,13 @@ class GetSubscriptionUserInfoSerializer(GetUserInfoSerializer):
         request = self.context.get("request")
         recipes_limit = request.query_params.get("recipes_limit")
 
-        if recipes_limit is not None:
-            try:
-                recipes_limit = int(recipes_limit)
-            except ValueError:
-                recipes_limit = None
+        if isinstance(recipes_limit, str) and not recipes_limit.isdigit():
+            recipes_limit = None
 
         recipes = obj.recipes.all()
         if recipes_limit:
-            recipes = recipes[:recipes_limit]
+            recipes = recipes[: int(recipes_limit)]
 
         return GetMiniRecipesSerializer(
             recipes, many=True, context=self.context
         ).data
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()

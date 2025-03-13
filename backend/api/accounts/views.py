@@ -1,4 +1,4 @@
-from django.contrib.auth import get_user_model
+from django.db.models import Count
 from djoser.views import UserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
@@ -6,7 +6,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from accounts.models import SubscriptionsModel
+from accounts.models import Subscription, User
 from api.accounts.serializers import (
     CreateSubscriptionSerializer,
     CreateUserSerializer,
@@ -14,26 +14,22 @@ from api.accounts.serializers import (
     GetUserInfoSerializer,
     UpdateUserAvatarSerializer,
 )
+from api.mixins import MultiSerializerViewSetMixin
 from api.pagination import PageLimitPagination
 
-UserModel = get_user_model()
 
-
-class CustomUserViewSet(UserViewSet):
+class CustomUserViewSet(MultiSerializerViewSetMixin, UserViewSet):
     serializer_class = GetUserInfoSerializer
     pagination_class = PageLimitPagination
+    serializer_classes = {
+        "create": CreateUserSerializer,
+        "me": GetUserInfoSerializer,
+    }
 
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
             return [AllowAny()]
         return super().get_permissions()
-
-    def get_serializer_class(self):
-        if self.action == "create":
-            return CreateUserSerializer
-        if self.action == "me":
-            return GetUserInfoSerializer
-        return super().get_serializer_class()
 
     @action(methods=["put", "delete"], detail=False, url_path="me/avatar")
     def me_avatar(self, request):
@@ -46,7 +42,6 @@ class CustomUserViewSet(UserViewSet):
 
         elif request.method == "DELETE":
             user.avatar.delete()
-            user.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
@@ -56,9 +51,11 @@ class CustomUserViewSet(UserViewSet):
     )
     def subscribe(self, request, id=None):
         user = request.user
-        subscribed_to = get_object_or_404(UserModel, id=id)
-
+        subscribed_to = get_object_or_404(
+            User.objects.annotate(recipes_count=Count("recipes")), id=id
+        )
         if request.method == "POST":
+
             serializer = CreateSubscriptionSerializer(
                 data={
                     "user": user.id,
@@ -73,13 +70,12 @@ class CustomUserViewSet(UserViewSet):
                 )
 
         elif request.method == "DELETE":
-            subscription = SubscriptionsModel.objects.filter(
+            deleted_count, _ = Subscription.objects.filter(
                 user=user, subscribed_to=subscribed_to
-            ).first()
-            if subscription:
-                subscription.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
+            ).delete()
 
+            if deleted_count:
+                return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
             {"error": "Вы не подписаны"}, status=status.HTTP_400_BAD_REQUEST
         )
@@ -92,9 +88,9 @@ class CustomUserViewSet(UserViewSet):
         ],
     )
     def subscriptions(self, request):
-        subscriptions = UserModel.objects.filter(
+        subscriptions = User.objects.filter(
             subscribers__user=request.user
-        )
+        ).annotate(recipes_count=Count("recipes"))
         result_pages = self.paginate_queryset(queryset=subscriptions)
         serializer = GetSubscriptionUserInfoSerializer(
             result_pages, context={"request": request}, many=True
