@@ -37,7 +37,10 @@ class RecipeModelAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         queryset = super().get_queryset(request)
-        return queryset.select_related("author").prefetch_related("ingredients", "tags")
+        return queryset.select_related("author").prefetch_related(
+            "ingredients",
+            "tags"
+        )
 
     def get_favorites_count(self, obj):
         return obj.favorites.count()
