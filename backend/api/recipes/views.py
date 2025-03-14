@@ -75,9 +75,9 @@ class RecipesViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
         self, request, pk, model, serializer_class, error_message
     ):
         user = request.user
-        recipe = get_object_or_404(Recipe, id=pk)
 
         if request.method == "POST":
+            recipe = get_object_or_404(Recipe, id=pk)
             serializer = serializer_class(
                 data={"user": user.id, "recipe": recipe.id},
                 context={"request": request},
@@ -85,18 +85,19 @@ class RecipesViewSet(MultiSerializerViewSetMixin, viewsets.ModelViewSet):
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
+                    serializer.data,
+                    status=status.HTTP_201_CREATED
                 )
 
         elif request.method == "DELETE":
             deleted_count, _ = model.objects.filter(
-                user=user, recipe=recipe
-            ).delete()
+                user=user, recipe_id=pk).delete()
             if deleted_count:
                 return Response(status=status.HTTP_204_NO_CONTENT)
 
         return Response(
-            {"error": error_message}, status=status.HTTP_400_BAD_REQUEST
+            {"error": error_message},
+            status=status.HTTP_400_BAD_REQUEST
         )
 
     @action(

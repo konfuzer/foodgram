@@ -66,7 +66,8 @@ class CustomUserViewSet(MultiSerializerViewSetMixin, UserViewSet):
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
                 return Response(
-                    serializer.data, status=status.HTTP_201_CREATED
+                    serializer.data,
+                    status=status.HTTP_201_CREATED
                 )
 
         elif request.method == "DELETE":
@@ -76,11 +77,11 @@ class CustomUserViewSet(MultiSerializerViewSetMixin, UserViewSet):
 
             if deleted_count:
                 return Response(status=status.HTTP_204_NO_CONTENT)
-            else:
-                return Response(
-                    {"error": "Вы не подписаны"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+
+            return Response(
+                {"error": "Вы не подписаны"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
     @action(
         methods=["get"],
